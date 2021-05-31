@@ -22,5 +22,8 @@ def create_rum():
     r = RUM(500, 500, 'rum.png')
 
 
-def test_rum_is_healing():
+def test_rum_heals():
+    pass
+
+def spike_platform_hurts():
     pass
