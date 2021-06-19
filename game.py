@@ -15,7 +15,6 @@ class Game:
         self.entities = pygame.sprite.Group()
         self.movables = pygame.sprite.Group()
         self.projectiles = pygame.sprite.Group()
-        self.swords = pygame.sprite.Group()
         self.platforms = []
         self.spikesplatforms = []
         self.monsters = []
@@ -62,6 +61,8 @@ class Game:
 
         '''Основной цикл игры'''
         while self.hero.done:
+            if self.testmodeon:
+                Firstgame.bottesting.bot_play(self)
             self.timer.tick(60)
             for e in pygame.event.get():  # Перебираем события
                 if e.type == pygame.QUIT:  # для определения времени выхода
@@ -98,9 +99,9 @@ class Game:
             window.blit(self.background, (0, 0))
             self.camera.update(self.hero)
             self.hero.update(self.left, self.right, self.up, self.platforms, self.exitplatform,
-                             self.spikesplatforms, self.monsters, self.consumables, self.entities)
-            self.movables.update(self.hero)
-            self.projectiles.update(self.monsters, self.platforms, self.spikesplatforms)
+                             self.spikesplatforms, self.monsters, self.consumables, self.entities, self.projectiles)
+            self.movables.update(self.hero, self.entities, self.movables, self.monsters)
+            self.projectiles.update(self.monsters, self.platforms, self.spikesplatforms, self.entities, self.projectiles)
             for ent in self.entities:
                 window.blit(ent.image, self.camera.apply(ent))
             for x in range(self.hero.health):
@@ -108,5 +109,3 @@ class Game:
             if self.hero.health == 0:
                 self.hero.die()
             pygame.display.update()
-            if self.testmodeon:
-                Firstgame.bottesting.bot_play(self)

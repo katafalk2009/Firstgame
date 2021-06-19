@@ -3,27 +3,32 @@ from Firstgame.first import *
 
 
 @pytest.fixture
-def create_player():
-    player = Player(100, 100, 'h.png')
+def test_player():
+    return Player(100, 100, r'D:\Pycharm Projects\Firstgame\h.png')
 
-
-@pytest.fixture
-def create_monster():
-    mon = Monster(200, 200, 'monster.png')
 
 
 @pytest.fixture
-def create_spike_platform():
-    spf = SpikesPlatform(300, 300, 'platform_s.png')
+def monster():
+    return Monster(200, 200, 'monster.png')
 
 
 @pytest.fixture
-def create_rum():
-    r = RUM(500, 500, 'rum.png')
+def spike_platform():
+    return SpikesPlatform(300, 300, 'platform_s.png')
 
 
-def test_rum_heals():
-    pass
+@pytest.fixture
+def rum():
+    return RUM(500, 500, r'D:\Pycharm Projects\Firstgame\rum.png')
 
-def spike_platform_hurts():
-    pass
+
+def test_rum_heals(test_player,rum):
+    test_player.x=500
+    test_player.y=500
+    test_player.collide_rum(rum)
+    assert test_player.health==4
+
+def spike_platform_hurts(test_player,spike_platform):
+    test_player.x = 500
+    test_player.y = 500

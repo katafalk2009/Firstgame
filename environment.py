@@ -25,7 +25,8 @@ class ExitPlatform(Platform):
 
 
 class SpikesPlatform(Platform):
-    pass
+    def damage(self,player):
+        player.health-=1
 
 
 class Consumables(sprite.Sprite):
@@ -39,4 +40,5 @@ class Consumables(sprite.Sprite):
 
 
 class RUM(Consumables):
-    pass
+    def heal(self,player):
+        player.health+=1

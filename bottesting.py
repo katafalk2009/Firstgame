@@ -20,16 +20,18 @@ def stopjump():
 
 
 def bot_play(game):
+    pygame.event.clear(eventtype=pygame.KEYDOWN)
     print('gameup', game.up)
     print('geroy', game.hero.rect.x)
     if game.hero.rect.x < 400:
-        game.right = True
+        go_right()
     for i in game.spikesplatforms:
         print('платформа', i.rect.x)
         if i.rect.x == game.hero.rect.x:
-            game.up = True
-            print(True)
+            jump()
             break
-        else:
-            print('false')
-            game.up = False
+
+
+
+
+

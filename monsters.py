@@ -36,8 +36,8 @@ class Monster(sprite.Sprite):
         else:
             self.rect.x += self.xvel
 
-    def atack(self, hero):
-        pass
+    def attack(self, hero):
+        hero.health-=1
 
     def check_hero_distance(self, hero):
         self.distanceX = self.rect.x-hero.rect.x
@@ -47,13 +47,13 @@ class Monster(sprite.Sprite):
         elif abs(self.distanceX) <= 30:
             self.hero_distance = 'nearby'
 
-    def update(self, hero):
+    def update(self, hero, entities, movables, monsters):
         self.check_hero_distance(hero)
         if self.hero_distance == 'away':
             self.move()
         elif self.hero_distance == 'in_vision':
             self.come_to_hero()
-        else:
-            self.atack(hero)
         if self.health == 0:
-            self.destruct = True
+            entities.remove(self)
+            movables.remove(self)
+            monsters.remove(self)

@@ -1,6 +1,6 @@
 
 import shelve
-from Firstgame.environment import RUM
+from Firstgame.environment import *
 from Firstgame.monsters import *
 MOVE_SPEED = 5
 JUMP_POWER = 10
@@ -28,16 +28,15 @@ class Player(sprite.Sprite):
         self.watching = 1  # умножаем скорость 1 вправо, -1 влево
         self.winlevel = False
         self.done = True  # для проверки цикла игры
-        with shelve.open('savefile') as db:
-            self.health = db['health']
+        self.health = 3
         self.destruct = False
         self.last_shoot_time = 0
         self.invul = False
         self.last_dmg = 0
-        self.atacking = False
         self.last_atack = 0
+        self.sword = Sword(self.rect.x + WIDTH, self.rect.y + HEIGHT / 2, 'sword.png', self.watching)
 
-    def update(self, left,  right, up, platforms, exitplatform, spikesplatforms, monsters, consumables, entities):
+    def update(self, left,  right, up, platforms, exitplatform, spikesplatforms, monsters, consumables, entities, projectiles):
         if not self.onGround:
             self.yvel += GRAVITY
         if up:
@@ -52,17 +51,20 @@ class Player(sprite.Sprite):
         if not (left or right):  # стоим, когда нет указаний идти
             self.xvel = 0
         self.onGround = False
-        self.collide(exitplatform, spikesplatforms, monsters, consumables, entities)
+        self.collide(exitplatform, monsters, consumables, entities)
         self.rect.x += self.xvel
-        self.collideplatforms(self.xvel, 0, platforms)
+        self.collideplatforms(self.xvel, 0, platforms+spikesplatforms)
         self.rect.y += self.yvel
-        self.collideplatforms(0, self.yvel, platforms)
+        self.collideplatforms(0, self.yvel, platforms+spikesplatforms)
         self.check_invul_cd()
         self.check_atacking()
 
     def collideplatforms(self, xvel, yvel, platforms):
         for p in platforms:
             if sprite.collide_rect(self, p):  # если есть пересечение платформы с игроком
+                if isinstance(p, SpikesPlatform) and not self.invul:
+                    p.damage(self)
+                    self.become_invul()
                 if xvel > 0:  # если движется вправо
                     self.rect.right = p.rect.left  # то не движется вправо
                     self.xvel = 0
@@ -76,25 +78,21 @@ class Player(sprite.Sprite):
                 if yvel < 0:  # если движется вверх
                     self.rect.top = p.rect.bottom  # то не движется вверх
                     self.yvel = 0  # и энергия прыжка пропадает
+    def collide_rum(self,rum):
+        if sprite.collide_rect(self, rum):
+            if isinstance(rum, RUM):
+                rum.heal(self)
+            return True
 
-    def collide(self, exitplatform, spikesplatforms, monsters, consumables, entities):
-        for sp in spikesplatforms:
-            if sprite.collide_rect(self, sp) and (self.invul is not True):
-                self.health -= 1
-                self.become_invul()
+    def collide(self, exitplatform, monsters, consumables, entities):
         for m in monsters:
-            if sprite.collide_rect(self, m) and not m.destruct and (self.invul is not True):
-                if self.atacking:
-                    pass
-                else:
-                    self.health -= 1
-                    self.become_invul()
+            if sprite.collide_rect(self, m) and not self.invul:
+                m.attack(self)
+                self.become_invul()
         if sprite.collide_rect(self, exitplatform):
             self.endlevel()
         for c in consumables:
-            if sprite.collide_rect(self, c) and not c.destruct:
-                if isinstance(c, RUM):
-                    self.health += 1
+            if self.collide_rum(c):
                 consumables.remove(c)
                 entities.remove(c)
 
@@ -112,16 +110,13 @@ class Player(sprite.Sprite):
         if time.get_ticks() > self.last_shoot_time + self.SHOOT_CD:
             self.projectile = Projectile(self.rect.x+32, self.rect.y+20, 'projectile.png', self.watching)
             self.last_shoot_time = time.get_ticks()
-        else:
-            return
+
 
     def atack(self):
         if time.get_ticks() > self.last_atack + self.ATACK_CD:
             self.last_atack = time.get_ticks()
-            self.atacking = True
-            self.sword = Sword(self.rect.x+WIDTH, self.rect.y+HEIGHT/2, 'sword.png', self.watching)
-        else:
-            return
+            self.sword.hidden = False
+
 
     def become_invul(self):
         if time.get_ticks() > self.last_dmg + self.INVUL_TIME:
@@ -137,13 +132,17 @@ class Player(sprite.Sprite):
             return
 
     def check_atacking(self):
-        if self.atacking:
-            self.sword.rect.x += self.xvel
-            self.sword.rect.y += self.yvel
+        self.sword.rect.x += self.xvel
+        self.sword.rect.y += self.yvel
         if time.get_ticks() > self.last_atack + 300:
-            if self.atacking:
-                self.sword.destruct = True
-            self.atacking = False
+            self.sword.hidden = True
+        if self.watching < 0:
+            self.sword.image.set_colorkey((0, 0, 0))
+            self.sword.image = transform.flip(self.sword.image, True, False)
+            self.sword.rect.x = self.rect.x - WIDTH
+
+        else:
+            self.sword.image = image.load('sword.png')
 
 
 class Sword(sprite.Sprite):
@@ -156,13 +155,16 @@ class Sword(sprite.Sprite):
             x = x - WIDTH - 20
         self.image.set_colorkey((0, 0, 0))
         self.rect = Rect(x, y, 20, 20)
-        self.destruct = False
         self.damage = 5
+        self.hidden = True
 
-    def collide(self, monsters, *args):
+    def collide(self, monsters, platforms, spikesplatforms, entities, projectiles):
         for m in monsters:
-            if sprite.collide_rect(self, m) and not self.destruct and not m.destruct:
+            if sprite.collide_rect(self, m):
                 m.health -= self.damage
+        if self.hidden:
+            entities.remove(self)
+            projectiles.remove(self)
 
     def update(self, *args):
         self.collide(*args)
@@ -176,14 +178,14 @@ class Projectile(sprite.Sprite):
         self.image.set_colorkey((0, 0, 0))
         self.rect = Rect(x, y, 8, 8)
         self.xvel = 5*watching
-        self.destruct = False
         self.damage = 5
+        self.destruct = False
 
-    def update(self, monsters, platforms, spikesplatforms):
+    def update(self, *args):
         self.rect.x += self.xvel
-        self.collide(monsters, platforms, spikesplatforms)
+        self.collide(*args)
 
-    def collide(self, monsters, platforms, spikesplatforms):
+    def collide(self, monsters, platforms, spikesplatforms, entities, projectiles):
         for p in platforms:
             if sprite.collide_rect(self, p):
                 self.destruct = True
@@ -194,6 +196,9 @@ class Projectile(sprite.Sprite):
             if sprite.collide_rect(self, m) and not self.destruct and not m.destruct:
                 self.destruct = True
                 m.health -= self.damage
+        if self.destruct:
+            entities.remove(self)
+            projectiles.remove(self)
 
 
 class HealthBar(sprite.Sprite):
