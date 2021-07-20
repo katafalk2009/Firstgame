@@ -36,7 +36,8 @@ class Player(sprite.Sprite):
         self.last_atack = 0
         self.sword = Sword(self.rect.x + WIDTH, self.rect.y + HEIGHT / 2, 'sword.png', self.watching)
 
-    def update(self, left,  right, up, platforms, exitplatform, spikesplatforms, monsters, consumables, entities, projectiles):
+    def update(self, left,  right, up, platforms, exitplatform,
+               spikesplatforms, monsters, consumables, entities, projectiles):
         if not self.onGround:
             self.yvel += GRAVITY
         if up:
