@@ -112,7 +112,6 @@ class Player(sprite.Sprite):
             self.projectile = Projectile(self.rect.x+32, self.rect.y+20, 'projectile.png', self.watching)
             self.last_shoot_time = time.get_ticks()
 
-
     def atack(self):
         if time.get_ticks() > self.last_atack + self.ATACK_CD:
             self.last_atack = time.get_ticks()

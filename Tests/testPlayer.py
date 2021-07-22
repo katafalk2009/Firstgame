@@ -2,6 +2,7 @@ import pytest
 from Firstgame.first import *
 
 
+
 @pytest.fixture
 def test_player():
     return Player(100, 100, r'D:\Pycharm Projects\Firstgame\h.png')

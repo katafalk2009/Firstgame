@@ -11,7 +11,7 @@ class Game:
     timer = pygame.time.Clock()
 
     def __init__(self, level, testmodeon):
-        self.hero = Player(100, 100, 'h.png')
+        self.hero = Player(200, 500, 'h.png')
         self.entities = pygame.sprite.Group()
         self.movables = pygame.sprite.Group()
         self.projectiles = pygame.sprite.Group()
@@ -61,8 +61,7 @@ class Game:
 
         '''Основной цикл игры'''
         while self.hero.done:
-            if self.testmodeon:
-                Firstgame.bottesting.bot_play(self)
+
             self.timer.tick(60)
             for e in pygame.event.get():  # Перебираем события
                 if e.type == pygame.QUIT:  # для определения времени выхода
@@ -96,6 +95,8 @@ class Game:
                 if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
                     self.hero.done = False
                     self.gotomenu = True
+            if self.testmodeon:
+                Firstgame.bottesting.bot_play(self)
             window.blit(self.background, (0, 0))
             self.camera.update(self.hero)
             self.hero.update(self.left, self.right, self.up, self.platforms, self.exitplatform,
