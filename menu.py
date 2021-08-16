@@ -1,7 +1,7 @@
 """
 Module with starting and pause menu.
 """
-from Firstgame.camera import *
+import camera
 import pygame
 
 
@@ -9,8 +9,8 @@ class Menu:
     """
     Starting menu class.
     """
-    background = pygame.Surface((WIN_WIDTH, WIN_HEIGHT))
-    background.fill(BG_COLOUR)
+    background = pygame.Surface((camera.WIN_WIDTH, camera.WIN_HEIGHT))
+    background.fill(camera.BG_COLOUR)
     ACTIVE_COLOUR = (150, 0, 0)
     COLOUR = (250, 250, 250)
     MENU_POS_X = 500
@@ -20,7 +20,7 @@ class Menu:
         self.items = items
         self.font = pygame.font.SysFont('Arial', 50)
         self.active_item = 10
-        self.testmodeone = False
+        self.test_mode_on = False
 
     def render(self, item, window, number, colour):
         font_item = self.font.render(item, False, colour)
@@ -51,7 +51,7 @@ class Menu:
                     if self.active_item == 0:
                         done = False
                     if self.active_item == 1:
-                        self.testmodeone=True
+                        self.test_mode_on = True
                         done = False
                     if self.active_item == 2:
                         raise SystemExit

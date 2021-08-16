@@ -1,14 +1,14 @@
-from pygame import *
+import pygame
 MONSTER_SPEED = 1
 
 
-class Monster(sprite.Sprite):
-    def __init__(self, x, y, filename):  # конструктор: расположение объекта, файл с модел.
-        sprite.Sprite.__init__(self)
-        self.image = Surface((32, 32))
-        self.image = image.load(filename)
+class Monster(pygame.sprite.Sprite):
+    def __init__(self, x, y, filename):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((32, 32))
+        self.image = pygame.image.load(filename)
         self.image.set_colorkey((255, 255, 255))
-        self.rect = Rect(x, y, 32, 32)
+        self.rect = pygame.Rect(x, y, 32, 32)
         self.xvel = 0
         self.movedistance = 200
         self.right = True
@@ -37,12 +37,12 @@ class Monster(sprite.Sprite):
             self.rect.x += self.xvel
 
     def attack(self, hero):
-        hero.health-=1
+        hero.health -= 1
 
     def check_hero_distance(self, hero):
         self.distanceX = self.rect.x-hero.rect.x
         self.distanceY = self.rect.y-hero.rect.y
-        if 50 < abs(self.distanceX) < 200 and abs(self.distanceY) < 200:  # создать переменные и настроить дист.
+        if 50 < abs(self.distanceX) < 200 and abs(self.distanceY) < 200:
             self.hero_distance = 'in_vision'
         elif abs(self.distanceX) <= 30:
             self.hero_distance = 'nearby'

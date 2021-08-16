@@ -15,7 +15,7 @@ class Platform(sprite.Sprite):
         sprite.Sprite.__init__(self)
         self.image = Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
         self.image.fill(Color(PLATFORM_COLOR))
-        self.image = image.load("%s/blocks/%s" % (ICON_DIR, img))
+        self.image = image.load(f"{ICON_DIR}/blocks/{img}")
         self.rect = Rect(x, y, PLATFORM_WIDTH, PLATFORM_HEIGHT)
         self.destruct = False
 
@@ -25,8 +25,12 @@ class ExitPlatform(Platform):
 
 
 class SpikesPlatform(Platform):
-    def damage(self,player):
-        player.health-=1
+    def __init__(self, x, y, img):
+        super().__init__(x, y, img)
+        self.damage_amount = 1
+
+    def damage(self, player):
+        player.health -= self.damage_amount
 
 
 class Consumables(sprite.Sprite):
@@ -40,5 +44,9 @@ class Consumables(sprite.Sprite):
 
 
 class RUM(Consumables):
+    def __init__(self, x, y, filename):
+        super().__init__(x, y, filename)
+        self.heal_amount = 1
+
     def heal(self,player):
-        player.health+=1
+        player.health += self.heal_amount

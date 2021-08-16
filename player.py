@@ -1,7 +1,7 @@
+import environment
+import pygame
 
-import shelve
-from Firstgame.environment import *
-from Firstgame.monsters import *
+
 MOVE_SPEED = 5
 JUMP_POWER = 10
 WIDTH = 50
@@ -9,19 +9,19 @@ HEIGHT = 50
 GRAVITY = 0.5
 
 
-class Player(sprite.Sprite):
+class Player(pygame.sprite.Sprite):
     SHOOT_CD = 1000
     INVUL_TIME = 2000
     ATACK_CD = 500
 
-    def __init__(self, x, y, filename):  # конструктор: расположение объекта, файл с модел.
-        sprite.Sprite.__init__(self)
+    def __init__(self, x, y, filename):
+        pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
-        self.image = Surface((WIDTH, HEIGHT))
-        self.image = image.load(filename)
+        self.image = pygame.Surface((WIDTH, HEIGHT))
+        self.image = pygame.image.load(filename)
         self.image.set_colorkey((0, 0, 0))
-        self.rect = Rect(x, y, WIDTH, HEIGHT)
+        self.rect = pygame.Rect(x, y, WIDTH, HEIGHT)
         self.xvel = 0
         self.yvel = 0
         self.onGround = False
@@ -34,7 +34,9 @@ class Player(sprite.Sprite):
         self.invul = False
         self.last_dmg = 0
         self.last_atack = 0
-        self.sword = Sword(self.rect.x + WIDTH, self.rect.y + HEIGHT / 2, 'sword.png', self.watching)
+        self.sword = Sword(self.rect.x + WIDTH,
+                           self.rect.y + HEIGHT / 2,
+                           'sword.png')
 
     def update(self, left,  right, up, platforms, exitplatform,
                spikesplatforms, monsters, consumables, entities, projectiles):
@@ -62,8 +64,9 @@ class Player(sprite.Sprite):
 
     def collideplatforms(self, xvel, yvel, platforms):
         for p in platforms:
-            if sprite.collide_rect(self, p):  # если есть пересечение платформы с игроком
-                if isinstance(p, SpikesPlatform) and not self.invul:
+            if pygame.sprite.collide_rect(self, p):
+                if isinstance(p, environment.SpikesPlatform) and \
+                        not self.invul:
                     p.damage(self)
                     self.become_invul()
                 if xvel > 0:  # если движется вправо
@@ -79,18 +82,19 @@ class Player(sprite.Sprite):
                 if yvel < 0:  # если движется вверх
                     self.rect.top = p.rect.bottom  # то не движется вверх
                     self.yvel = 0  # и энергия прыжка пропадает
-    def collide_rum(self,rum):
-        if sprite.collide_rect(self, rum):
-            if isinstance(rum, RUM):
+
+    def collide_rum(self, rum):
+        if pygame.sprite.collide_rect(self, rum):
+            if isinstance(rum, environment.RUM):
                 rum.heal(self)
             return True
 
     def collide(self, exitplatform, monsters, consumables, entities):
         for m in monsters:
-            if sprite.collide_rect(self, m) and not self.invul:
+            if pygame.sprite.collide_rect(self, m) and not self.invul:
                 m.attack(self)
                 self.become_invul()
-        if sprite.collide_rect(self, exitplatform):
+        if pygame.sprite.collide_rect(self, exitplatform):
             self.endlevel()
         for c in consumables:
             if self.collide_rum(c):
@@ -108,59 +112,57 @@ class Player(sprite.Sprite):
         self.winlevel = False
 
     def shoot(self):
-        if time.get_ticks() > self.last_shoot_time + self.SHOOT_CD:
-            self.projectile = Projectile(self.rect.x+32, self.rect.y+20, 'projectile.png', self.watching)
-            self.last_shoot_time = time.get_ticks()
+        if pygame.time.get_ticks() > self.last_shoot_time + self.SHOOT_CD:
+            self.projectile = Projectile(self.rect.x+32, self.rect.y+20,
+                                         'projectile.png', self.watching)
+            self.last_shoot_time = pygame.time.get_ticks()
 
     def atack(self):
-        if time.get_ticks() > self.last_atack + self.ATACK_CD:
-            self.last_atack = time.get_ticks()
+        if pygame.time.get_ticks() > self.last_atack + self.ATACK_CD:
+            self.last_atack = pygame.time.get_ticks()
             self.sword.hidden = False
+            if self.watching < 0:
+                self.sword.image = pygame.image.load('swordleft.png')
+            else:
+                self.sword.image = pygame.image.load('sword.png')
 
 
     def become_invul(self):
-        if time.get_ticks() > self.last_dmg + self.INVUL_TIME:
+        if pygame.time.get_ticks() > self.last_dmg + self.INVUL_TIME:
             self.invul = True
-            self.last_dmg = time.get_ticks()
+            self.last_dmg = pygame.time.get_ticks()
         else:
             return
 
     def check_invul_cd(self):
-        if time.get_ticks() > self.last_dmg + self.INVUL_TIME:
+        if pygame.time.get_ticks() > self.last_dmg + self.INVUL_TIME:
             self.invul = False
         else:
             return
 
     def check_atacking(self):
-        self.sword.rect.x += self.xvel
-        self.sword.rect.y += self.yvel
-        if time.get_ticks() > self.last_atack + 300:
+        self.sword.rect.x = self.rect.x + WIDTH
+        if self.watching<1:
+            self.sword.rect.x = self.sword.rect.x - WIDTH - 20
+        self.sword.rect.y = self.rect.y + HEIGHT / 2
+        if pygame.time.get_ticks() > self.last_atack + 300:
             self.sword.hidden = True
-        if self.watching < 0:
-            self.sword.image.set_colorkey((0, 0, 0))
-            self.sword.image = transform.flip(self.sword.image, True, False)
-            self.sword.rect.x = self.rect.x - WIDTH
-
-        else:
-            self.sword.image = image.load('sword.png')
 
 
-class Sword(sprite.Sprite):
-    def __init__(self, x, y, filename, watching):
-        sprite.Sprite.__init__(self)
-        self.image = Surface((20, 20))
-        self.image = image.load(filename)
-        if watching < 0:
-            self.image = transform.flip(self.image, True, False)
-            x = x - WIDTH - 20
+class Sword(pygame.sprite.Sprite):
+    def __init__(self, x, y, filename):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((20, 20))
+        self.image = pygame.image.load(filename)
         self.image.set_colorkey((0, 0, 0))
-        self.rect = Rect(x, y, 20, 20)
+        self.rect = pygame.Rect(x, y, 20, 20)
         self.damage = 5
         self.hidden = True
 
-    def collide(self, monsters, platforms, spikesplatforms, entities, projectiles):
+    def collide(self, monsters, platforms, spikesplatforms,
+                entities, projectiles):
         for m in monsters:
-            if sprite.collide_rect(self, m):
+            if pygame.sprite.collide_rect(self, m):
                 m.health -= self.damage
         if self.hidden:
             entities.remove(self)
@@ -170,13 +172,13 @@ class Sword(sprite.Sprite):
         self.collide(*args)
 
 
-class Projectile(sprite.Sprite):
-    def __init__(self, x, y, filename, watching):  # конструктор: расположение объекта, файл с модел.
-        sprite.Sprite.__init__(self)
-        self.image = Surface((8, 8))
-        self.image = image.load(filename)
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, x, y, filename, watching):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((8, 8))
+        self.image = pygame.image.load(filename)
         self.image.set_colorkey((0, 0, 0))
-        self.rect = Rect(x, y, 8, 8)
+        self.rect = pygame.Rect(x, y, 8, 8)
         self.xvel = 5*watching
         self.damage = 5
         self.destruct = False
@@ -185,15 +187,17 @@ class Projectile(sprite.Sprite):
         self.rect.x += self.xvel
         self.collide(*args)
 
-    def collide(self, monsters, platforms, spikesplatforms, entities, projectiles):
+    def collide(self, monsters, platforms, spikesplatforms,
+                entities, projectiles):
         for p in platforms:
-            if sprite.collide_rect(self, p):
+            if pygame.sprite.collide_rect(self, p):
                 self.destruct = True
         for sp in spikesplatforms:
-            if sprite.collide_rect(self, sp):
+            if pygame.sprite.collide_rect(self, sp):
                 self.destruct = True
         for m in monsters:
-            if sprite.collide_rect(self, m) and not self.destruct and not m.destruct:
+            if pygame.sprite.collide_rect(self, m) and not self.destruct\
+                    and not m.destruct:
                 self.destruct = True
                 m.health -= self.damage
         if self.destruct:
@@ -201,9 +205,9 @@ class Projectile(sprite.Sprite):
             projectiles.remove(self)
 
 
-class HealthBar(sprite.Sprite):
-    def __init__(self, filename):  # конструктор: расположение объекта, файл с модел.
-        sprite.Sprite.__init__(self)
-        self.image = Surface((32, 32))
-        self.image = image.load(filename)
+class HealthBar(pygame.sprite.Sprite):
+    def __init__(self, filename):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((32, 32))
+        self.image = pygame.image.load(filename)
         self.image.set_colorkey((0, 0, 0))
